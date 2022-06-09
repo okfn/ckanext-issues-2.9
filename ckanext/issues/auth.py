@@ -1,4 +1,3 @@
-from ckanext.issues.tests.logic.action.test_issue import dataset
 from ckan import model
 import ckan.plugins as p
 from ckanext.issues import model as issue_model
