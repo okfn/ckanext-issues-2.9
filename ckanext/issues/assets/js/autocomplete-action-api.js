@@ -1,3 +1,5 @@
+"use strict";
+
 /* An auto-complete module for select and input elements that can pull in
  * a list of terms from an API endpoint (provided using data-module-source).
  *
@@ -15,7 +17,8 @@
  *   // <input name="tags" data-module="autocomplete" data-module-source="http://" />
  *
  */
-this.ckan.module('autocomplete-action-api', function (jQuery, _) {
+
+ckan.module('autocomplete-action-api', function (jQuery, _) {
   return {
     /* Options for the module */
     options: {

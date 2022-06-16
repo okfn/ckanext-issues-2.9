@@ -9,7 +9,7 @@ dataset - package object
 
 {% block styles %}
   {{ super() }}
-  {% asset 'issues/autocomplete-action-api' %}
+  {% asset 'gdx/modules/autocomplete-action-api' %}
 {% endblock %}
 
 {% block subtitle %}{{ '%s #%s - %s' % (issue.title, issue.number, _('Issues')) }} {% endblock %}
@@ -267,7 +267,7 @@ endfor %}">
       {{ _('Change Assignee') }}
     </h2>
     <form id='ckanext-issues-assign' class="dataset-form form-horizontal add-member-form" method='post' action="{{ h.url_for('issues.assign', issue_number=issue.number, dataset_id=dataset.id) }}">
-        <div class="controls">
+        <div class="issues controls">
           <input id="assignee" type="text" name="assignee" placeholder="{{ _('Username') }}"
           value="" class="control-medium" data-module="autocomplete-action-api"
           {% if dataset['owner_org'] %}
@@ -276,7 +276,7 @@ endfor %}">
           data-module-source="/api/3/action/user_autocomplete?q=?">
           {% endif %}
         </div>
-        <div>
+        <div class="issues confirm">
           <button class="btn btn-sm btn-success" type="submit" name="assign">
             {{ _('Assign') }}
           </button>

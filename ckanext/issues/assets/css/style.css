@@ -262,3 +262,11 @@
   margin-right: -15px;
   margin-bottom: 0px;
 }
+
+.issues.controls {
+  padding: 20px;
+}
+
+.issues.confirm {
+  padding-left: 20px;
+}

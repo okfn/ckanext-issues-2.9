@@ -29,8 +29,7 @@ set           {% for key, error in g.error_summary.items() %}
     {#{{ form.input('resource', label=_('Resource'), id='resource', attrs={'disabled':'1'}) }} ]#}
   {% endblock %}
 
-  <div class="form-actions">
-
+  <div class="col-sm-9">
     <button class="btn btn-primary" type="submit" name="save" tabindex="4">{{ _('Create') }}</button>
   </div>
 </form>
