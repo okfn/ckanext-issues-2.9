@@ -1,43 +1,7 @@
-
-Корисникот '{{ user.fullname or user.name }}' додаде коментар на еден од проблемите на {{ site_title }}.
-
-Податочниот сет е: {{ dataset.title }}
-Проблемот е: {{ issue_subject }}
-Коментарот е:
-
-> {{ comment.comment|wordwrap(width=76)|replace('\n', '\n> '|safe) }}
-
-За да одговорите на коментарот, Ве молиме видете го проблемот тука: {{ h.url_for('issues_show', dataset_id=dataset.name, issue_number=issue.number, qualified=True) }}. Штом проблемот е разрешен, кликнете 'Затвори проблем'.
-
-Ви благодариме,
-
-Тимот на {{ site_title }}
-
---
-
-Проблем: {{ h.url_for('issues_show', dataset_id=dataset.name, issue_number=issue.number, qualified=True) }}
-Податочен сет: {{ h.url_for('dataset_read', id=dataset.name, qualified=True) }}
-
----
-
-Një përdorues '{{ user.fullname or user.name }}' ka shtuar një koment për një nga çështjet tuaja në {{ site_title }}.
-
-Dataset: {{ dataset.title }}
-Problemi është: {{ issue_subject }}
-Komenti është:
-
-> {{ comment.comment|wordwrap(width=76)|replace('\n', '\n> '|safe) }}
-
-Për t'ju përgjigjur komentit, ju lutemi shihni çështjen në: {{ h.url_for('issues_show', dataset_id=dataset.name, issue_number=issue.number, qualified=True) }}. Sapo çështja të jetë zgjidhur, kliko 'Çështja e mbylljes'.
-
-Faleminderit,
-
-{{ site_title }} ekip
-
 --
 
 
-Problem: {{ h.url_for('issues_show', dataset_id=dataset.name, issue_number=issue.number, qualified=True) }}
+Problem: {{ h.url_for('issues.show_issue', dataset_id=dataset.name, issue_number=issue.number, qualified=True) }}
 Dataset: {{ h.url_for('dataset_read', id=dataset.name, qualified=True) }}
 
 ---
@@ -51,7 +15,7 @@ The comment is:
 
 > {{ comment.comment|wordwrap(width=76)|replace('\n', '\n> '|safe) }}
 
-In order to respond to the comment, please see the issue at: {{ h.url_for('issues_show', dataset_id=dataset.name, issue_number=issue.number, qualified=True) }}. Once the issue has been resolved, click 'Close issue'.
+In order to respond to the comment, please see the issue at: {{ h.url_for('issues.show_issue', dataset_id=dataset.name, issue_number=issue.number, qualified=True) }}. Once the issue has been resolved, click 'Close issue'.
 
 Thank you,
 
@@ -59,5 +23,5 @@ The {{ site_title }} team
 
 --
 
-Issue: {{ h.url_for('issues_show', dataset_id=dataset.name, issue_number=issue.number, qualified=True) }}
+Issue: {{ h.url_for('issues.show_issue', dataset_id=dataset.name, issue_number=issue.number, qualified=True) }}
 Dataset: {{ h.url_for('dataset_read', id=dataset.name, qualified=True) }}
