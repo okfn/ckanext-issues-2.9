@@ -76,6 +76,8 @@ class IssuesPlugin(p.SingletonPlugin, DefaultTranslation):
                 helpers.issues_user_is_owner,
             'issues_users_who_reported_issue':
                 helpers.issues_users_who_reported_issue,
+            'use_autocomplete':
+                helpers.use_autocomplete
         }
 
     

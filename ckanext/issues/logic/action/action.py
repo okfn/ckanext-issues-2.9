@@ -492,6 +492,37 @@ def issue_comment_create(context, data_dict):
 
 
 @p.toolkit.side_effect_free
+@validate(schema.organization_users_schema)
+def organization_users(context, data_dict):
+    session = context['session']
+    user = context['user']
+    organization_id = data_dict['organization_id']
+    query = session.query(model.User.id, model.User.name,
+                          model.User.fullname)\
+        .filter(model.Member.group_id == organization_id)\
+        .filter(model.Member.table_name == 'user')\
+        .filter(model.Member.capacity.in_(['editor', 'admin']))\
+        .filter(model.Member.state == 'active')\
+        .filter(model.User.state != model.State.DELETED)\
+        .filter(model.User.id == model.Member.table_id)\
+        .distinct()\
+
+    users = []
+    for user in query.all():
+        if isinstance(user, tuple):
+            user_dict = {
+                'id': user[0],
+                'name': user[1],
+                'fullname': user[2],
+            }
+        else:
+            user_dict = dict(user.__dict__)
+            user_dict.pop('_labels', None)
+        users.append(user_dict)
+    return users
+
+
+@p.toolkit.side_effect_free
 @validate(schema.organization_users_autocomplete_schema)
 def organization_users_autocomplete(context, data_dict):
     session = context['session']

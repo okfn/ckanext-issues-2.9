@@ -11,5 +11,6 @@ from .action import (
     issue_comment_report_clear,
     issue_comment_search,
     issue_update,
+    organization_users,
     organization_users_autocomplete,
 )
