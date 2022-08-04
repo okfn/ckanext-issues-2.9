@@ -42,7 +42,6 @@ ckan.module('list-users-assign-api', function (jQuery, _) {
     getUsers: function () {
       let users = []
       $.ajax('/api/3/action/organization_users?organization_id=' + this.options.organization_id).then((res) => {
-        console.log(this.el)
         users = res['result'].sort((a,b) => a.toLowerCase() >= b.toLowerCase())
         for (let user of users) {
           let userOpt = document.createElement('option')
