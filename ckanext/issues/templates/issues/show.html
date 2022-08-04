@@ -9,7 +9,11 @@ dataset - package object
 
 {% block styles %}
   {{ super() }}
-  {% asset 'gdx/modules/autocomplete-action-api' %}
+  {% if h.use_autocomplete() == True %}
+  {% asset 'issues/modules/autocomplete-action-api' %}
+  {% else %}
+  {% asset 'issues/modules/list-users-assign-api' %}
+  {% endif %}
 {% endblock %}
 
 {% block subtitle %}{{ '%s #%s - %s' % (issue.title, issue.number, _('Issues')) }} {% endblock %}
@@ -268,12 +272,18 @@ endfor %}">
     </h2>
     <form id='ckanext-issues-assign' class="dataset-form form-horizontal add-member-form" method='post' action="{{ h.url_for('issues.assign', issue_number=issue.number, dataset_id=dataset.id) }}">
         <div class="issues controls">
+          {% if h.use_autocomplete() == True %}
           <input id="assignee" type="text" name="assignee" placeholder="{{ _('Username') }}"
           value="" class="control-medium" data-module="autocomplete-action-api"
           {% if dataset['owner_org'] %}
           data-module-source="/api/3/action/organization_users_autocomplete?organization_id={{ dataset['owner_org']}}&q=?">
           {% else %}
           data-module-source="/api/3/action/user_autocomplete?q=?">
+          {% endif %}
+          {% else %}
+          <select id="assignee" name="assignee" class="form-control select-placeholder none-selected" data-module="list-users-assign-api" data-module-organization_id="{{dataset['owner_org']}}">
+            <option selected disabled hidden>Choose an user</option>
+          </select>
           {% endif %}
         </div>
         <div class="issues confirm">

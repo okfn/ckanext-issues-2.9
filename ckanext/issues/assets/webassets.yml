@@ -4,4 +4,20 @@ style:
   contents:
     - css/style.css
 
+modules/list-users-assign-api:
+  output: vendor/%(version)s_list-users-assign-api.js
+  contents:
+    - js/list-users-assign-api.js
+  extra:
+    preload:
+      - base/main
+
+modules/autocomplete-action-api:
+  output: vendor/%(version)s_autocomplete-action-api.js
+  contents:
+    - js/autocomplete-action-api.js
+  extra:
+    preload:
+      - base/main
+
 

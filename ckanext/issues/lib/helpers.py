@@ -221,3 +221,6 @@ def issues_user_is_owner(user, dataset_id):
         authorized = False
 
     return authorized
+
+def use_autocomplete():
+    return config.get('ckanext.issues.use_autocomplete', True)

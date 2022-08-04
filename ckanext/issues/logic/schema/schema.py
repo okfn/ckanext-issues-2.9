@@ -135,6 +135,12 @@ def issue_show_controller_schema():
     }
 
 
+def organization_users_schema():
+    return {
+        'organization_id': [not_missing],
+    }
+
+
 def organization_users_autocomplete_schema():
     return {
         'q': [not_missing],
