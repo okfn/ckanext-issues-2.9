@@ -1,21 +1,7 @@
 "use strict";
 
-/* An auto-complete module for select and input elements that can pull in
- * a list of terms from an API endpoint (provided using data-module-source).
- *
- * source   - A url pointing to an API autocomplete endpoint.
- * interval - The interval between requests in milliseconds (default: 1000).
- * items    - The max number of items to display (default: 10)
- * tags     - Boolean attribute if true will create a tag input.
- * key      - A string of the key you want to be the form value to end up on
- *            from the ajax returned results
- * label    - A string of the label you want to appear within the dropdown for
- *            returned results
- *
- * Examples
- *
- *   // <input name="tags" data-module="autocomplete" data-module-source="http://" />
- *
+/* An user list module for display the list of users with admin or manager role
+ * from a dataset organization
  */
 
 ckan.module('list-users-assign-api', function (jQuery, _) {
@@ -42,11 +28,11 @@ ckan.module('list-users-assign-api', function (jQuery, _) {
     getUsers: function () {
       let users = []
       $.ajax('/api/3/action/organization_users?organization_id=' + this.options.organization_id).then((res) => {
-        users = res['result'].sort((a,b) => a['name'].toLowerCase() >= b['name'].toLowerCase())
+        users = res['result'].sort((a,b) => a['fullname'].toLowerCase() >= b['fullname'].toLowerCase())
         for (let user of users) {
           let userOpt = document.createElement('option')
           userOpt.value = user['id']
-          userOpt.innerHTML = user['name']
+          userOpt.innerHTML = user['fullname']
           this.el[0].appendChild(userOpt)
         }
       })
