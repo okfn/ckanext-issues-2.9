@@ -40,7 +40,7 @@ class TestIssueShow(object):
         )
         assert 'Test Issue' == issue['title']
         assert 'Some description' == issue['description']
-        
+
     @pytest.mark.usefixtures("clean_db", "issues_setup")
     def test_issue_user_dictization(self, issue1):
         issue = helpers.call_action(
@@ -68,18 +68,14 @@ class TestIssueNewWithEmailing(object):
             users=[{'name': admin['id'], 'capacity': 'admin'}])
         dataset = factories.Dataset(owner_org=org['id'])
 
-        # mock the render as it is easier to look at the variables passed in
-        # than the rendered text
-        with mock.patch('ckanext.issues.logic.action.action.render_jinja2') \
-                as render_mock:
-            issue_create_result = toolkit.get_action('issue_create')(
-                context={'user': creator['name']},
-                data_dict={
-                    'title': 'Title',
-                    'description': 'Description',
-                    'dataset_id': dataset['id'],
-                }
-            )
+        issue_create_result = toolkit.get_action('issue_create')(
+            context={'user': creator['name']},
+            data_dict={
+                'title': 'Title',
+                'description': 'Description',
+                'dataset_id': dataset['id'],
+            }
+        )
 
         issue_object = Issue.get(issue_create_result['id'])
         assert 'Title' == issue_object.title
@@ -231,17 +227,13 @@ class TestIssueComment(object):
         issue = issue_factories.Issue(user=creator, user_id=creator['id'],
                                       dataset_id=dataset['id'])
 
-        # mock the render as it is easier to look at the variables passed in
-        # than the rendered text
-        with mock.patch('ckanext.issues.logic.action.action.render_jinja2') \
-                as render_mock:
-            helpers.call_action(
-                'issue_comment_create',
-                context={'user': commenter['name']},
-                issue_number=issue['number'],
-                dataset_id=issue['dataset_id'],
-                comment='some comment'
-            )
+        helpers.call_action(
+            'issue_comment_create',
+            context={'user': commenter['name']},
+            issue_number=issue['number'],
+            dataset_id=issue['dataset_id'],
+            comment='some comment'
+        )
 
         result = helpers.call_action(
             'issue_show',
@@ -668,7 +660,7 @@ class TestCommentSearch(object):
         comment_object = IssueComment.get(comment1['id'])
         comment_object.change_visibility(model.Session, u'hidden')
         return comment1
-    
+
     @pytest.fixture
     def comment2(self, issue):
         comment2 = issue_factories.IssueComment(
@@ -695,7 +687,7 @@ class TestCommentSearch(object):
         comment_object = IssueComment.get(comment3['id'])
         comment_object.change_visibility(model.Session, u'hidden')
         return comment3
-    
+
     @pytest.fixture
     def comment4(self, issue):
         comment4 = issue_factories.IssueComment(

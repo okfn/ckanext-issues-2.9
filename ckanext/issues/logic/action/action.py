@@ -5,7 +5,6 @@ import ckan.logic as logic
 import ckan.plugins as p
 import ckan.model as model
 from ckan.lib import mailer
-from ckan.lib.base import render_jinja2
 from ckan.logic import validate
 import ckan.lib.helpers as h
 import ckanext.issues.model as issuemodel
