@@ -85,7 +85,7 @@ def new(dataset_id, resource_id=None):
     if resource:
         data_dict['resource_id'] = resource.id
 
-    g.errors, g.error_summary = {}, {}
+    error_summary = {}
 
     if request.method == 'POST':
         # TODO: ? use dictization etc
@@ -99,21 +99,26 @@ def new(dataset_id, resource_id=None):
             })
 
         if not data_dict['title']:
-            g.error_summary['title'] = ["Please enter a title"]
-        g.errors = g.error_summary
+            error_summary['title'] = ["Please enter a title"]
 
-        if not g.error_summary:  # save and redirect
+        if not error_summary:  # save and redirect
             issue_dict = toolkit.get_action('issue_create')(
                 data_dict=data_dict
             )
             h.flash_success(_('Your issue has been registered, '
                                 'thank you for the feedback'))
-            return toolkit.redirect_to('issues.show_issue',
+            return toolkit.redirect_to(
+                'issues.show_issue',
                 dataset_id=dataset_dict['name'],
-                issue_number=issue_dict['number'])
+                issue_number=issue_dict['number']
+                )
 
-    g.data_dict = data_dict
-    return toolkit.render("issues/add.html")
+    extra_vars = {
+        "data_dict": data_dict,
+        "error_summary": error_summary,
+        }
+
+    return toolkit.render("issues/add.html", extra_vars=extra_vars)
 
 
 # RENAMED it conflicted with views.show.show
