@@ -463,29 +463,6 @@ def issues_for_organization(org_id):
     return toolkit.render("issues/organization_issues.html",
                     extra_vars=template_params)
 
-    # TO DELETE
-    g.org = model.Group.get(org_id)
-
-    q = """
-        SELECT table_id
-        FROM member
-        WHERE group_id='{gid}'
-            AND table_name='package'
-            AND state='active'
-    """.format(gid=g.org.id)
-    results = model.Session.execute(q)
-
-    dataset_ids = [x['table_id'] for x in results]
-    issues = model.Session.query(issuemodel.Issue)\
-        .filter(issuemodel.Issue.dataset_id.in_(dataset_ids))\
-        .order_by(issuemodel.Issue.created.desc())
-
-    g.results = collections.defaultdict(list)
-    for issue in issues:
-        g.results[issue.package].append(issue)
-    g.package_set = sorted(set(g.results.keys()), key=lambda x: x.title)
-    print(g.package_set)
-    return render("issues/organization_issues.html", extra_vars=template_params)
 
 def all_issues_page():
     """
