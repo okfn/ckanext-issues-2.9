@@ -1,33 +1,34 @@
 """
 CKAN Issue Extension
 """
-from logging import getLogger
-log = getLogger(__name__)
+import click
+import logging
 
 import ckan.plugins as p
-from ckan.lib.plugins import DefaultTranslation
-from ckan.plugins import implements, toolkit
-from ckan.lib.helpers import ckan_version
 
+from ckan.lib.plugins import DefaultTranslation
+from ckan.plugins import toolkit
+
+from ckanext.issues import auth
+from ckanext.issues.lib import helpers, util
+from ckanext.issues.logic import action
 from ckanext.issues.views.issues import issues
 from ckanext.issues.views.moderation import moderation
 
+log = logging.getLogger(__name__)
 
-
-# Imports are done in methods to speed up paster.
-# Please don't move back up to here.
 
 class IssuesPlugin(p.SingletonPlugin, DefaultTranslation):
     """
     CKAN Issues Extension
     """
-    implements(p.ITranslation)
-    implements(p.IConfigurer, inherit=True)
-    implements(p.ITemplateHelpers, inherit=True)
-    implements(p.IActions)
-    implements(p.IAuthFunctions)
-    implements(p.IClick)
-    implements(p.IBlueprint)
+    p.implements(p.ITranslation)
+    p.implements(p.IConfigurer, inherit=True)
+    p.implements(p.ITemplateHelpers, inherit=True)
+    p.implements(p.IActions)
+    p.implements(p.IAuthFunctions)
+    p.implements(p.IClick)
+    p.implements(p.IBlueprint)
 
     # IConfigurer
     def update_config(self, config):
@@ -35,11 +36,9 @@ class IssuesPlugin(p.SingletonPlugin, DefaultTranslation):
         toolkit.add_public_directory(config, 'public')
         toolkit.add_resource('assets', 'issues')
 
-
     # IClick
     def get_commands(self):
-        """CLI commands - Creates or Updated issues data tables"""       
-        import click
+        """CLI commands - Creates or Updated issues data tables"""
 
         @click.command()
         def issuesdb():
@@ -55,10 +54,9 @@ class IssuesPlugin(p.SingletonPlugin, DefaultTranslation):
             print('Issues tables are up to date')
 
         return [issuesdb, issuesupdate]
-    
+
     # ITemplateHelpers
     def get_helpers(self):
-        from ckanext.issues.lib import util, helpers
         return {
             'issues_installed': lambda: True,
             'issue_count': util.issue_count,
@@ -80,24 +78,18 @@ class IssuesPlugin(p.SingletonPlugin, DefaultTranslation):
                 helpers.use_autocomplete
         }
 
-    
     # IBlueprint
     def get_blueprint(self):
         return [issues, moderation]
 
-
     # IActions
     def get_actions(self):
-        import ckanext.issues.logic.action as action
-
         return dict((name, function) for name, function
                     in action.__dict__.items()
                     if callable(function))
 
-
     # IAuthFunctions
     def get_auth_functions(self):
-        import ckanext.issues.auth as auth
         return {
             'issue_admin': auth.issue_admin,
             'issue_search': auth.issue_search,
@@ -110,4 +102,3 @@ class IssuesPlugin(p.SingletonPlugin, DefaultTranslation):
             'issue_report_clear': auth.issue_report_clear,
             'issue_comment_search': auth.issue_comment_search,
         }
-        
