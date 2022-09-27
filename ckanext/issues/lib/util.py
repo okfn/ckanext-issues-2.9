@@ -1,12 +1,16 @@
+from ckan import model
+from ckan.lib import jinja_extensions
+
 import ckanext.issues.model as issue_model
-import ckan.model as model
 
 
 def issue_count(package):
     return issue_model.Issue.get_issue_count_for_package(package['id'])
 
+
 def issue_comment_count(issue):
     return issue_model.IssueComment.get_comment_count_for_issue(issue['id'])
+
 
 def issue_comments(issue):
     return issue_model.IssueComment.get_comments_for_issue(issue['id'])
@@ -35,14 +39,32 @@ def _issue_query(org, resolved_required=False, days=None):
 
     return q
 
+
 def old_unresolved(org, days=30):
     q = _issue_query(org, False, days=days)
     return model.Session.execute(q).scalar()
+
 
 def resolved_count_for_organization(org):
     q = _issue_query(org, False)
     return model.Session.execute(q).scalar()
 
+
 def unresolved_count_for_organization(org):
     q = _issue_query(org, True)
     return model.Session.execute(q).scalar()
+
+
+def render_jinja2(template_name, extra_vars):
+    """ Adds CKAN jinja extensions to a jinja2 render function.
+
+    This function is useful to render email bodies with Jinja2 and
+    have access to CKAN jinja_extensions. Main difference with
+    ckan.base.render(...) is that this function can be executed
+    outside a request context.
+    """
+    env = jinja_extensions.Environment(
+        **jinja_extensions.get_jinja_env_options()
+        )
+    template = env.get_template(template_name)
+    return template.render(**extra_vars)

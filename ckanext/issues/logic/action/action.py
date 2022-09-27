@@ -9,6 +9,7 @@ from ckan.logic import validate
 from ckan.plugins import toolkit
 
 from ckanext.issues.exception import ReportAlreadyExists
+from ckanext.issues.lib.util import render_jinja2
 from ckanext.issues.lib.helpers import get_issue_subject, get_site_title
 from ckanext.issues.logic import schema
 from ckanext.issues import model as issuemodel
@@ -151,14 +152,14 @@ def _get_issue_email_body(issue, issue_subject, user_obj, recipient):
     extra_vars = _get_issue_vars(issue, issue_subject, user_obj, recipient)
     # Would use toolkit.render, but it mucks with response and other things,
     # which is unnecessary, and toolkit.render_text uses genshi...
-    return toolkit.render('issues/email/new_issue.html', extra_vars=extra_vars)
+    return render_jinja2('issues/email/new_issue.html', extra_vars=extra_vars)
 
 
 def _get_comment_email_body(comment, issue_subject, user_obj, recipient):
     extra_vars = _get_issue_vars(comment.issue, issue_subject, user_obj,
                                  recipient)
     extra_vars['comment'] = comment
-    return toolkit.render('issues/email/new_comment.html', extra_vars=extra_vars)
+    return render_jinja2('issues/email/new_comment.html', extra_vars=extra_vars)
 
 
 @validate(schema.issue_create_schema)
