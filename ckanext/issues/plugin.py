@@ -84,9 +84,22 @@ class IssuesPlugin(p.SingletonPlugin, DefaultTranslation):
 
     # IActions
     def get_actions(self):
-        return dict((name, function) for name, function
-                    in action.__dict__.items()
-                    if callable(function))
+        return {
+            "issue_comment_create": action.issue_comment_create,
+            "issue_create": action.issue_create,
+            "issue_delete": action.issue_delete,
+            "issue_search": action.issue_search,
+            "issue_show": action.issue_show,
+            "issue_report": action.issue_report,
+            "issue_report_show": action.issue_report_show,
+            "issue_report_clear": action.issue_report_clear,
+            "issue_comment_report": action.issue_comment_report,
+            "issue_comment_report_clear": action.issue_comment_report_clear,
+            "issue_comment_search": action.issue_comment_search,
+            "issue_update": action.issue_update,
+            "organization_users": action.organization_users,
+            "organization_users_autocomplete": action.organization_users_autocomplete,
+        }
 
     # IAuthFunctions
     def get_auth_functions(self):
