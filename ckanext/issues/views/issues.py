@@ -4,7 +4,6 @@ import logging
 
 from flask import Blueprint
 
-import ckan.logic as logic
 from ckan import model
 from ckan.lib import helpers as h, mailer
 from ckan.plugins import toolkit
@@ -30,7 +29,7 @@ def _before_dataset(dataset_id):
     '''Returns the dataset dict and checks issues are enabled for it.'''
     context = {'for_view': True}
     try:
-        pkg = logic.get_action('package_show')(context,
+        pkg = toolkit.get_action('package_show')(context,
                                                 {'id': dataset_id})
         # need this as some templates in core explicitly reference
         # g.pkg_dict
@@ -43,7 +42,7 @@ def _before_dataset(dataset_id):
         if not issues_helpers.issues_enabled(pkg):
             toolkit.abort(404, _('Issues have not been enabled for this dataset'))
         return pkg
-    except logic.NotFound:
+    except toolkit.ObjectNotFound:
         toolkit.abort(404, _('Dataset not found'))
     except toolkit.NotAuthorized:
         toolkit.abort(401,
@@ -53,7 +52,7 @@ def _before_org(org_id):
     '''Returns the organization dict and checks issues are enabled for it.'''
     context = {'for_view': True}
     try:
-        org = logic.get_action('organization_show')(context,
+        org = toolkit.get_action('organization_show')(context,
                                                     {'id': org_id})
 
         # we should pass org to the template as an extra_var
@@ -61,7 +60,7 @@ def _before_org(org_id):
         if not issues_helpers.issues_enabled_for_organization(org):
             toolkit.abort(404, _('Issues have not been enabled for this organization'))
         return org
-    except logic.NotFound:
+    except toolkit.ObjectNotFound:
         toolkit.abort(404, _('Dataset not found'))
     except toolkit.NotAuthorized:
         toolkit.abort(401,
@@ -78,8 +77,8 @@ def new(dataset_id, resource_id=None):
         'creator_id': g.userobj.id
     }
     try:
-        logic.check_access('issue_create', context, data_dict)
-    except logic.NotAuthorized:
+        toolkit.check_access('issue_create', context, data_dict)
+    except toolkit.NotAuthorized:
         toolkit.abort(403, _('Not authorized to add a new issue'))
     resource = model.Resource.get(resource_id) if resource_id else None
     if resource:
@@ -103,7 +102,7 @@ def new(dataset_id, resource_id=None):
         g.errors = g.error_summary
 
         if not g.error_summary:  # save and redirect
-            issue_dict = logic.get_action('issue_create')(
+            issue_dict = toolkit.get_action('issue_create')(
                 data_dict=data_dict
             )
             h.flash_success(_('Your issue has been registered, '
@@ -189,8 +188,8 @@ def comments(dataset_id, issue_number):
         }
     # Are we not repeating stuff in logic ???
     try:
-        logic.check_access('issue_create', context, auth_dict)
-    except logic.NotAuthorized:
+        toolkit.check_access('issue_create', context, auth_dict)
+    except toolkit.NotAuthorized:
         toolkit.abort(403, _('Not authorized'))
 
     next_url = h.url_for('issues.show_issue',
@@ -214,8 +213,8 @@ def comments(dataset_id, issue_number):
             'status': status
             }
         try:
-            logic.get_action('issue_update')(context, issue_dict)
-        except logic.NotAuthorized:
+            toolkit.get_action('issue_update')(context, issue_dict)
+        except toolkit.NotAuthorized:
             toolkit.abort(403, _('Not authorized'))
 
         if 'close' in request.form:
@@ -229,7 +228,7 @@ def comments(dataset_id, issue_number):
         'dataset_id': dataset['id'],
         'issue_number': issue_number,
         }
-    logic.get_action('issue_comment_create')(context, data_dict)
+    toolkit.get_action('issue_comment_create')(context, data_dict)
 
     return toolkit.redirect_to(next_url)
 
@@ -524,7 +523,7 @@ def issues_for_org(org_id, get_query_dict):
                                      include_datasets=True,
                                      **query)
     template_params['org'] = \
-        logic.get_action('organization_show')({}, {'id': org_id})
+        toolkit.get_action('organization_show')({}, {'id': org_id})
     return template_params
 
 def all_issues(get_query_dict):
