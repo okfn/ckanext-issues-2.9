@@ -48,6 +48,7 @@ def _before_dataset(dataset_id):
         toolkit.abort(401,
                         _('Unauthorized to view issues for this dataset'))
 
+
 def _before_org(org_id):
     '''Returns the organization dict and checks issues are enabled for it.'''
     context = {'for_view': True}
@@ -65,6 +66,7 @@ def _before_org(org_id):
     except toolkit.NotAuthorized:
         toolkit.abort(401,
                         _('Unauthorized to view issues for this organization'))
+
 
 def new(dataset_id, resource_id=None):
     context = {'for_view': True}
@@ -114,6 +116,7 @@ def new(dataset_id, resource_id=None):
     g.data_dict = data_dict
     return toolkit.render("issues/add.html")
 
+
 # RENAMED it conflicted with views.show.show
 def show_issue(issue_number, dataset_id):
     dataset = _before_dataset(dataset_id)
@@ -134,6 +137,7 @@ def show_issue(issue_number, dataset_id):
     extra_vars['issue']['user'] = vars(user_issue)
 
     return toolkit.render('issues/show.html', extra_vars=extra_vars)
+
 
 def edit(dataset_id, issue_number):
     _before_dataset(dataset_id)
@@ -173,6 +177,7 @@ def edit(dataset_id, issue_number):
             )
         except toolkit.NotAuthorized as e:
             toolkit.abort(401, e.message)
+
 
 def comments(dataset_id, issue_number):
     # POST only
@@ -232,6 +237,7 @@ def comments(dataset_id, issue_number):
 
     return toolkit.redirect_to(next_url)
 
+
 def dataset(dataset_id):
     """
     Display a page containing a list of all issues items for a dataset,
@@ -244,6 +250,7 @@ def dataset(dataset_id):
     except toolkit.ValidationError as e:
         _dataset_handle_error(dataset_id, e)
     return toolkit.render("issues/dataset.html", extra_vars=extra_vars)
+
 
 def delete(dataset_id, issue_number):
     dataset = _before_dataset(dataset_id)
@@ -273,6 +280,7 @@ def delete(dataset_id, issue_number):
                             'issue_number': issue_number,
                             'pkg': dataset,
                         })
+
 
 def assign(dataset_id, issue_number):
     dataset = _before_dataset(dataset_id)
@@ -325,6 +333,7 @@ def assign(dataset_id, issue_number):
                                     issue_number=issue_number,
                                     dataset_id=dataset_id)
 
+
 def report(dataset_id, issue_number):
     pkg = _before_dataset(dataset_id)
     if not g.user:
@@ -360,6 +369,7 @@ def report(dataset_id, issue_number):
         return toolkit.redirect_to('issues.show_issue',
                                 dataset_id=dataset_id,
                                 issue_number=issue_number)
+
 
 def report_comment(dataset_id, issue_number, comment_id):
     dataset = _before_dataset(dataset_id)
@@ -399,6 +409,7 @@ def report_comment(dataset_id, issue_number, comment_id):
         return toolkit.redirect_to('issues.show_issue', dataset_id=dataset_id,
                                 issue_number=issue_number)
 
+
 def report_clear(dataset_id, issue_number):
     dataset = _before_dataset(dataset_id)
     if request.method == 'POST':
@@ -423,6 +434,7 @@ def report_clear(dataset_id, issue_number):
         except toolkit.ObjectNotFound:
             toolkit.abort(404)
 
+
 def comment_report_clear(dataset_id, issue_number, comment_id):
     dataset = _before_dataset(dataset_id)
     if request.method == 'POST':
@@ -445,6 +457,7 @@ def comment_report_clear(dataset_id, issue_number, comment_id):
             toolkit.abort(404)
         except toolkit.ObjectNotFound:
             toolkit.abort(404)
+
 
 def issues_for_organization(org_id):
     """
@@ -483,10 +496,12 @@ def issues_for_dataset(dataset_id, get_query_dict):
         dict(get_query_dict),
         schema.issue_dataset_controller_schema()
     )
+
     if errors:
         raise toolkit.ValidationError(errors)
     query.pop('__extras', None)
     return _search_issues(dataset_id=dataset_id, **query)
+
 
 def issues_for_org(org_id, get_query_dict):
     query, errors = toolkit.navl_validate(
@@ -503,6 +518,7 @@ def issues_for_org(org_id, get_query_dict):
         toolkit.get_action('organization_show')({}, {'id': org_id})
     return template_params
 
+
 def all_issues(get_query_dict):
     query, errors = toolkit.navl_validate(
         dict(get_query_dict),
@@ -513,6 +529,7 @@ def all_issues(get_query_dict):
     query.pop('__extras', None)
     return _search_issues(include_datasets=True,
                           **query)
+
 
 def _search_issues(dataset_id=None,
                    organization_id=None,
