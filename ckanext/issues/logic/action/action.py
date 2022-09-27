@@ -4,7 +4,7 @@ from datetime import datetime
 
 from ckan import authz
 from ckan import model
-from ckan.lib import mailer
+from ckan.lib import mailer, helpers
 from ckan.logic import validate
 from ckan.plugins import toolkit
 
@@ -144,7 +144,7 @@ def _get_issue_vars(issue, issue_subject, user_obj, recipient):
             'user': user_obj,
             'site_title': get_site_title(),
             'recipient': recipient,
-            'h': h}
+            'h': helpers}
 
 
 def _get_issue_email_body(issue, issue_subject, user_obj, recipient):
