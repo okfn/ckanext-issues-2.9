@@ -1,3 +1,5 @@
+from jinja2 import Environment
+
 from ckan import model
 from ckan.lib import jinja_extensions
 
@@ -63,8 +65,6 @@ def render_jinja2(template_name, extra_vars):
     ckan.base.render(...) is that this function can be executed
     outside a request context.
     """
-    env = jinja_extensions.Environment(
-        **jinja_extensions.get_jinja_env_options()
-        )
+    env = Environment(**jinja_extensions.get_jinja_env_options())
     template = env.get_template(template_name)
     return template.render(**extra_vars)
