@@ -26,7 +26,7 @@ def replace_url_param(new_params, alternative_url=None, controller=None,
     This can be overriden providing an alternative_url, which will be used
     instead.
     '''
-    params_cleaned = [(k, v) for k, v in toolkit.request.params.items()
+    params_cleaned = [(k, v) for k, v in toolkit.request.args.items()
                       if k not in new_params.keys()]
     params = set(params_cleaned)
     if new_params:

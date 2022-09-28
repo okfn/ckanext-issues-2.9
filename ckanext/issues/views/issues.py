@@ -88,7 +88,7 @@ def new(dataset_id, resource_id=None):
         #    data = logic.clean_dict(
         #        df.unflatten(
         #            logic.tuplize_dict(
-        #                logic.parse_params(request.params))))
+        #                logic.parse_params(request.args))))
         data_dict.update({
             'title': request.form.get('title'),
             'description': request.form.get('description')
