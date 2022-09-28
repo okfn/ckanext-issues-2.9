@@ -490,10 +490,8 @@ def issue_comment_create(context, data_dict):
 @validate(schema.organization_users_schema)
 def organization_users(context, data_dict):
     session = context['session']
-    user = context['user']
     organization_id = data_dict['organization_id']
-    query = session.query(model.User.id, model.User.name,
-                          model.User.fullname)\
+    query = session.query(model.User)\
         .filter(model.Member.group_id == organization_id)\
         .filter(model.Member.table_name == 'user')\
         .filter(model.Member.capacity.in_(['editor', 'admin']))\
@@ -504,15 +502,11 @@ def organization_users(context, data_dict):
 
     users = []
     for user in query.all():
-        if isinstance(user, tuple):
-            user_dict = {
-                'id': user[0],
-                'name': user[1],
-                'fullname': user[2],
-            }
-        else:
-            user_dict = dict(user.__dict__)
-            user_dict.pop('_labels', None)
+        user_dict = {
+            'id': user.id,
+            'name': user.name,
+            'fullname': user.fullname,
+        }
         users.append(user_dict)
     return users
 
@@ -521,12 +515,10 @@ def organization_users(context, data_dict):
 @validate(schema.organization_users_autocomplete_schema)
 def organization_users_autocomplete(context, data_dict):
     session = context['session']
-    user = context['user']
     q = data_dict['q']
     organization_id = data_dict['organization_id']
     limit = data_dict.get('limit', 20)
-    query = session.query(model.User.id, model.User.name,
-                          model.User.fullname)\
+    query = session.query(model.User)\
         .filter(model.Member.group_id == organization_id)\
         .filter(model.Member.table_name == 'user')\
         .filter(model.Member.capacity.in_(['editor', 'admin']))\
@@ -539,16 +531,13 @@ def organization_users_autocomplete(context, data_dict):
 
     users = []
     for user in query.all():
-        if isinstance(user, tuple):
-            user_dict = {
-                'id': user[0],
-                'name': user[1],
-                'fullname': user[2],
+        user_dict = {
+                'id': user.id,
+                'name': user.name,
+                'fullname': user.fullname,
             }
-        else:
-            user_dict = dict(user.__dict__)
-            user_dict.pop('_labels', None)
         users.append(user_dict)
+
     return users
 
 
