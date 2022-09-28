@@ -248,11 +248,12 @@ def dataset(dataset_id):
     sorted by category.
     """
     pkg = _before_dataset(dataset_id)
+    extra_vars = {}
     try:
         extra_vars = issues_for_dataset(dataset_id, request.args)
-        extra_vars['pkg_dict'] = pkg
     except toolkit.ValidationError as e:
         _dataset_handle_error(dataset_id, e)
+    extra_vars['pkg_dict'] = pkg
     return toolkit.render("issues/dataset.html", extra_vars=extra_vars)
 
 
