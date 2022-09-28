@@ -31,14 +31,6 @@ def _before_dataset(dataset_id):
         pkg = toolkit.get_action('package_show')(
             context, {'id': dataset_id}
             )
-        # need this as some templates in core explicitly reference
-        # g.pkg_dict
-        g.pkg = pkg
-        g.pkg_dict = g.pkg
-
-        # keep the above lines to keep current code working till it's all
-        # refactored out, otherwise, we should pass pkg as an extra_var
-        # directly that's returned from this function
         if not issues_helpers.issues_enabled(pkg):
             toolkit.abort(
                 404,
@@ -61,9 +53,6 @@ def _before_org(org_id):
         org = toolkit.get_action('organization_show')(
             context, {'id': org_id}
             )
-
-        # we should pass org to the template as an extra_var
-        # directly that's returned from this function
         if not issues_helpers.issues_enabled_for_organization(org):
             toolkit.abort(404, _('Issues have not been enabled for this organization'))
         return org
@@ -123,6 +112,7 @@ def new(dataset_id, resource_id=None):
     extra_vars = {
         "data_dict": data_dict,
         "error_summary": error_summary,
+        "pkg_dict": dataset_dict
         }
 
     return toolkit.render("issues/add.html", extra_vars=extra_vars)
@@ -145,7 +135,7 @@ def show_issue(issue_number, dataset_id):
         toolkit.abort(
             404, toolkit._('Issue not found: {0}'.format(e)))
 
-    extra_vars['dataset'] = dataset
+    extra_vars['pkg_dict'] = dataset
     # passing the user object as well, because it is needed in the HTML
     user_issue = model.Session.query(model.User)\
         .filter(model.User.id == extra_vars['issue']['user_id']).first()
@@ -205,7 +195,7 @@ def comments(dataset_id, issue_number):
     dataset = _before_dataset(dataset_id)
 
     auth_dict = {
-        'dataset_id': g.pkg['id'],
+        'dataset_id': dataset_id,
         'issue_number': issue_number
         }
     # Are we not repeating stuff in logic ???
@@ -216,7 +206,7 @@ def comments(dataset_id, issue_number):
 
     next_url = h.url_for(
         'issues.show_issue',
-        dataset_id=g.pkg['name'],
+        dataset_id=dataset["name"],
         issue_number=issue_number
         )
 
