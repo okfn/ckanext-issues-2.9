@@ -1,5 +1,5 @@
 from ckan import model
-import ckan.plugins as p
+from ckan.plugins import toolkit
 from ckanext.issues import model as issue_model
 
 
@@ -10,12 +10,12 @@ def issue_auth(context, data_dict, privilege='package_update'):
     # we're checking package access so it is dataset/package id
     auth_data_dict['id'] = auth_data_dict['dataset_id']
     try:
-        p.toolkit.check_access(privilege, context, auth_data_dict)
+        toolkit.check_access(privilege, context, auth_data_dict)
         return {'success': True}
-    except p.toolkit.NotAuthorized:
+    except toolkit.NotAuthorized:
         return {
             'success': False,
-            'msg': p.toolkit._(
+            'msg': toolkit._(
                 'User {0} not authorized for action on issue {1}'.format(
                     str(context['user']),
                     auth_data_dict['id']
@@ -24,38 +24,40 @@ def issue_auth(context, data_dict, privilege='package_update'):
         }
 
 
-@p.toolkit.auth_allow_anonymous_access
+@toolkit.auth_allow_anonymous_access
 def issue_show(context, data_dict):
     return issue_auth(context, data_dict, 'package_show')
 
 
-@p.toolkit.auth_allow_anonymous_access
+@toolkit.auth_allow_anonymous_access
 def issue_search(context, data_dict):
     try:
-        p.toolkit.check_access('package_search', context, dict(data_dict))
+        toolkit.check_access('package_search', context, dict(data_dict))
         return {'success': True}
-    except p.toolkit.NotAuthorized:
+    except toolkit.NotAuthorized:
         return {
             'success': False,
-            'msg': p.toolkit._(
+            'msg': toolkit._(
                 'User {0} not authorized for action'.format(
                     str(context['user'])
                 )
             )
         }
 
-@p.toolkit.auth_allow_anonymous_access
+
+@toolkit.auth_allow_anonymous_access
 def issue_create(context, data_dict):
     # Any logged in user
     return {'success': bool(context['user'])}
 
-@p.toolkit.auth_allow_anonymous_access
+
+@toolkit.auth_allow_anonymous_access
 def issue_comment_create(context, data_dict):
     return {'success': bool(context['user'])}
     # return issue_auth(context, data_dict, 'package_create')
 
 
-@p.toolkit.auth_allow_anonymous_access
+@toolkit.auth_allow_anonymous_access
 def issue_update(context, data_dict):
     '''Checks that we can update the issue.
 
@@ -91,7 +93,7 @@ def issue_update(context, data_dict):
     # all other cases not allowed
     return {
         'success': False,
-        'msg': p.toolkit._(
+        'msg': toolkit._(
             'User {user} not authorized for action on issue {issue}'.format(
                 user=str(user),
                 issue=data_dict['issue_number'])
@@ -99,7 +101,7 @@ def issue_update(context, data_dict):
     }
 
 
-@p.toolkit.auth_disallow_anonymous_access
+@toolkit.auth_disallow_anonymous_access
 def issue_delete(context, data_dict):
     try:
         issue_number = data_dict['issue_number']
@@ -119,17 +121,17 @@ def issue_delete(context, data_dict):
     return issue_auth(context, data_dict)
 
 
-@p.toolkit.auth_disallow_anonymous_access
+@toolkit.auth_disallow_anonymous_access
 def issue_report(context, data_dict):
     return {'success': True}
 
 
-@p.toolkit.auth_disallow_anonymous_access
+@toolkit.auth_disallow_anonymous_access
 def issue_report_clear(context, data_dict):
     return {'success': True}
 
 
-@p.toolkit.auth_disallow_anonymous_access
+@toolkit.auth_disallow_anonymous_access
 def issue_admin(context, data_dict):
     '''Who can administrate and issue
 
@@ -137,6 +139,6 @@ def issue_admin(context, data_dict):
     return issue_auth(context, data_dict)
 
 
-@p.toolkit.auth_allow_anonymous_access
+@toolkit.auth_allow_anonymous_access
 def issue_comment_search(context, data_dict):
     return {'success': True}

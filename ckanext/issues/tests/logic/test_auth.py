@@ -2,11 +2,11 @@ import pytest
 
 from ckan import model
 from ckan.plugins import toolkit
-from ckan.tests import helpers
-from ckan.tests import factories
+from ckan.tests import helpers, factories
 
 from ckanext.issues.tests import factories as issue_factories
 from ckanext.issues.tests.fixtures import issues_setup, user, owner
+
 
 class TestIssueUpdate(object):
 
@@ -28,7 +28,7 @@ class TestIssueUpdate(object):
                                 issue_number=issue['number'],
                                 dataset_id=dataset['id'],
                                 status='open')
-        
+
     @pytest.mark.usefixtures("clean_db", "issues_setup")
     def test_issue_owner_can_update_issue(self, owner):
         issue_owner = owner

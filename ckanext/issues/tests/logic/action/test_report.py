@@ -60,8 +60,7 @@ class TestReportAnIssue(object):
         )
         assert 'hidden' == result['visibility']
 
-    @mock.patch.dict('ckanext.issues.logic.action.action.config',
-                     {'ckanext.issues.max_strikes': '0'})
+    @pytest.mark.ckan_config('ckanext.issues.max_strikes', '0')
     @pytest.mark.usefixtures("clean_db", "issues_setup")
     def test_max_strikes_hides_issues(self, owner):
             org = factories.Organization(user=owner)
@@ -106,7 +105,7 @@ class TestReportAnIssueTwice(object):
     @pytest.fixture
     def dataset(self, org):
         return factories.Dataset(owner_org=org['name'])
-    
+
     @pytest.fixture
     def issue(self, owner, dataset):
         return issue_factories.Issue(user=owner,
@@ -284,7 +283,7 @@ class TestReportComment(object):
     @pytest.fixture
     def dataset(self, org):
         return factories.Dataset(owner_org=org['name'])
-    
+
     @pytest.fixture
     def issue(self, owner, dataset):
         return issue_factories.Issue(user=owner,
@@ -330,8 +329,7 @@ class TestReportComment(object):
                                      dataset_id=dataset['id'])
         assert 'hidden' == result['comments'][0]['visibility']
 
-    @mock.patch.dict('ckanext.issues.logic.action.action.config',
-                     {'ckanext.issues.max_strikes': '0'})
+    @pytest.mark.ckan_config('ckanext.issues.max_strikes', '0')
     @pytest.mark.usefixtures("clean_db", "issues_setup")
     def test_max_strikes_hides_comment(self, owner, org, dataset, issue):
         comment = issue_factories.IssueComment(user_id=owner['id'],
@@ -363,13 +361,13 @@ class TestReportCommentTwice(object):
     @pytest.fixture
     def dataset(self, org):
         return factories.Dataset(owner_org=org['name'])
-    
+
     @pytest.fixture
     def issue(self, owner, dataset):
         return issue_factories.Issue(user=owner,
                                     user_id=owner['id'],
                                     dataset_id=dataset['id'])
-    
+
     @pytest.mark.usefixtures("clean_db", "issues_setup")
     def test_report_twice(self, owner, org, dataset, issue):
         comment = issue_factories.IssueComment(user_id=owner['id'],
@@ -406,7 +404,7 @@ class TestCommentReportClearAsPublisher(object):
     @pytest.fixture
     def dataset(self, org):
         return factories.Dataset(owner_org=org['name'])
-    
+
     @pytest.fixture
     def issue(self, owner, dataset):
         return issue_factories.Issue(user=owner,
@@ -447,14 +445,14 @@ class TestCommentReportClearAsUser(object):
     @pytest.fixture
     def dataset(self, org):
         return factories.Dataset(owner_org=org['name'])
-    
+
     @pytest.fixture
     def issue(self, owner, dataset):
         return issue_factories.Issue(user=owner,
                                     user_id=owner['id'],
                                     dataset_id=dataset['id'])
 
-    @pytest.mark.usefixtures("clean_db", "issues_setup")    
+    @pytest.mark.usefixtures("clean_db", "issues_setup")
     def test_clear_as_user(self, owner, org, dataset, issue):
         comment = issue_factories.IssueComment(user_id=owner['id'],
                                                dataset_id=dataset['id'],

@@ -1,15 +1,17 @@
+import logging
+
 from math import ceil
 
 from ckan import model
-from ckan.plugins import toolkit
-from ckan.plugins.toolkit import config
 from ckan.lib import helpers
+from ckan.plugins import toolkit
+
 from ckanext.issues.model import IssueFilter
 from ckanext.issues import model as issuemodel
 
 ISSUES_PER_PAGE = (15, 30, 50)
 
-log = __import__('logging').getLogger(__name__)
+log = logging.getLogger(__name__)
 
 
 def replace_url_param(new_params, alternative_url=None, controller=None,
@@ -24,7 +26,7 @@ def replace_url_param(new_params, alternative_url=None, controller=None,
     This can be overriden providing an alternative_url, which will be used
     instead.
     '''
-    params_cleaned = [(k, v) for k, v in toolkit.request.params.items()
+    params_cleaned = [(k, v) for k, v in toolkit.request.args.items()
                       if k not in new_params.keys()]
     params = set(params_cleaned)
     if new_params:
@@ -96,7 +98,7 @@ def get_issue_filter_types():
 def get_issues_per_page():
     try:
         issues_per_page = [int(i) for i in
-                           config['ckan.issues.issues_per_page']]
+                           toolkit.config['ckan.issues.issues_per_page']]
     except (ValueError, KeyError):
         issues_per_page = ISSUES_PER_PAGE
     return issues_per_page
@@ -104,13 +106,13 @@ def get_issues_per_page():
 
 def issues_enabled(dataset):
     '''Returns whether issues are enabled for the given dataset (dict)'''
-    # config options allow you to only enable issues for particular datasets or
+    # toolkit.config options allow you to only enable issues for particular datasets or
     # organizations
     datasets_with_issues_enabled = set(toolkit.aslist(
-        config.get('ckanext.issues.enabled_for_datasets')
+        toolkit.config.get('ckanext.issues.enabled_for_datasets')
     ))
     organizations_with_issues_enabled = set(toolkit.aslist(
-        config.get('ckanext.issues.enabled_for_organizations')
+        toolkit.config.get('ckanext.issues.enabled_for_organizations')
     ))
     if datasets_with_issues_enabled or organizations_with_issues_enabled:
         if datasets_with_issues_enabled and \
@@ -128,18 +130,20 @@ def issues_enabled(dataset):
                 return toolkit.asbool(extra.get('value'))
         else:
             return toolkit.asbool(
-                config.get('ckanext.issues.enabled_without_extra', True)
+                toolkit.config.get('ckanext.issues.enabled_without_extra', True)
             )
+
 
 def issues_enabled_for_organization(organization):
     '''Returns whether issues are enabled for the given organization (dict)'''
     organizations_with_issues_enabled = set(toolkit.aslist(
-        config.get('ckanext.issues.enabled_for_organizations')
+        toolkit.config.get('ckanext.issues.enabled_for_organizations')
     ))
     if organizations_with_issues_enabled:
         return organization and \
             organization.get('name') in organizations_with_issues_enabled
     return True
+
 
 def issues_list(dataset_ref, status=issuemodel.ISSUE_STATUS.open):
     '''
@@ -185,14 +189,7 @@ def issues_users_who_reported_issue(abuse_reports):
 
 
 def get_site_title():
-    # older ckans
-    site_title = config.get('ckan.site_title')
-    try:
-        # from ckan 2.4
-        from ckan.model.system_info import get_system_info
-        return get_system_info('ckan.site_title', site_title)
-    except ImportError:
-        return site_title
+    return toolkit.config.get('ckan.site_title')
 
 
 def get_issue_subject(issue):
@@ -222,5 +219,6 @@ def issues_user_is_owner(user, dataset_id):
 
     return authorized
 
+
 def use_autocomplete():
-    return config.get('ckanext.issues.use_autocomplete', True)
+    return toolkit.config.get('ckanext.issues.use_autocomplete', True)

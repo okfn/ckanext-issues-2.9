@@ -1,27 +1,23 @@
 import logging
+
 from datetime import datetime
 
-import ckan.logic as logic
-import ckan.plugins as p
-import ckan.model as model
-from ckan.lib import mailer
-from ckan.lib.base import render_jinja2
+from ckan import authz
+from ckan import model
+from ckan.lib import mailer, helpers
 from ckan.logic import validate
-import ckan.lib.helpers as h
-import ckanext.issues.model as issuemodel
-from ckanext.issues.logic import schema
+from ckan.plugins import toolkit
+
 from ckanext.issues.exception import ReportAlreadyExists
+from ckanext.issues.lib.util import render_jinja2
 from ckanext.issues.lib.helpers import get_issue_subject, get_site_title
-try:
-    import ckan.authz as authz
-except ImportError:
-    import ckan.new_authz as authz
+from ckanext.issues.logic import schema
+from ckanext.issues import model as issuemodel
 
-from ckan.plugins.toolkit import config
-from sqlalchemy.exc import IntegrityError
+
 from sqlalchemy import desc
+from sqlalchemy.exc import IntegrityError
 
-_get_or_bust = logic.get_or_bust
 
 log = logging.getLogger(__name__)
 
@@ -38,7 +34,7 @@ def _add_reports(obj, can_edit, current_user):
             return []
 
 
-@p.toolkit.side_effect_free
+@toolkit.side_effect_free
 @validate(schema.issue_show_schema)
 def issue_show(context, data_dict):
     '''Return a single issue.
@@ -60,25 +56,25 @@ def issue_show(context, data_dict):
         issue_number=issue_number,
         session=session)
     if not issue:
-        raise p.toolkit.ObjectNotFound(p.toolkit._('Issue does not exist'))
+        raise toolkit.ObjectNotFound(toolkit._('Issue does not exist'))
     context['issue'] = issue
     issue_dict = vars(issue)
     user = context.get('user')
     if user:
         try:
-            can_edit = p.toolkit.check_access(
+            can_edit = toolkit.check_access(
                 'package_update',
                 context,
                 data_dict={'id': issue.dataset_id}
             )
-        except p.toolkit.NotAuthorized:
+        except toolkit.NotAuthorized:
             can_edit = False
     else:
         can_edit = False
 
     if issue.visibility != 'visible' and not can_edit:
-        raise p.toolkit.ObjectNotFound(
-            p.toolkit._('Issue marked as spam/abuse'))
+        raise toolkit.ObjectNotFound(
+            toolkit._('Issue marked as spam/abuse'))
 
     include_reports = data_dict.get('include_reports')
 
@@ -90,18 +86,18 @@ def issue_show(context, data_dict):
                                                          context['user'])
         comments.append(comment_dict)
 
-    try :
+    try:
         # if it comes from api it will throw sql instance ant be serialized
         # datetime.datetime can't be serialized
         if context['api_version']:
-            del issue_dict['_sa_instance_state' ]
+            del issue_dict['_sa_instance_state']
             issue_dict['created'] = str(issue_dict['created'])
     except KeyError:
         pass
 
     issue_dict['comments'] = comments
 
-    p.toolkit.check_access('issue_show', context, issue_dict)
+    toolkit.check_access('issue_show', context, issue_dict)
     return issue_dict
 
 
@@ -124,7 +120,7 @@ def _get_recipients(context, dataset):
     recipients = []
     roles = authz.get_roles_with_permission('update_dataset')
     for role in roles:
-        members = p.toolkit.get_action('member_list')(
+        members = toolkit.get_action('member_list')(
             context,
             data_dict={
                 'id': organization,
@@ -149,22 +145,21 @@ def _get_issue_vars(issue, issue_subject, user_obj, recipient):
             'user': user_obj,
             'site_title': get_site_title(),
             'recipient': recipient,
-            'h': h}
+            'h': helpers}
 
 
 def _get_issue_email_body(issue, issue_subject, user_obj, recipient):
     extra_vars = _get_issue_vars(issue, issue_subject, user_obj, recipient)
-    # Would use p.toolkit.render, but it mucks with response and other things,
-    # which is unnecessary, and p.toolkit.render_text uses genshi...
-    return p.toolkit.render('issues/email/new_issue.html', extra_vars=extra_vars)
+    # Would use toolkit.render, but it mucks with response and other things,
+    # which is unnecessary, and toolkit.render_text uses genshi...
+    return render_jinja2('issues/email/new_issue.html', extra_vars=extra_vars)
 
 
 def _get_comment_email_body(comment, issue_subject, user_obj, recipient):
     extra_vars = _get_issue_vars(comment.issue, issue_subject, user_obj,
                                  recipient)
     extra_vars['comment'] = comment
-    return p.toolkit.render('issues/email/new_comment.html',
-                         extra_vars=extra_vars)
+    return render_jinja2('issues/email/new_comment.html', extra_vars=extra_vars)
 
 
 @validate(schema.issue_create_schema)
@@ -184,7 +179,7 @@ def issue_create(context, data_dict):
     :returns: the newly created issue item
     :rtype: dictionary
     '''
-    p.toolkit.check_access('issue_create', context, data_dict)
+    toolkit.check_access('issue_create', context, data_dict)
 
     user = context['user']
     user_obj = model.User.get(user)
@@ -201,8 +196,8 @@ def issue_create(context, data_dict):
     session.add(issue)
     session.commit()
 
-    notifications = p.toolkit.asbool(
-        config.get('ckanext.issues.send_email_notifications')
+    notifications = toolkit.asbool(
+        toolkit.config.get('ckanext.issues.send_email_notifications')
     )
 
     if notifications:
@@ -244,7 +239,7 @@ def issue_update(context, data_dict):
     :returns: the newly updated issue item
     :rtype: dictionary
     '''
-    p.toolkit.check_access('issue_update', context, data_dict)
+    toolkit.check_access('issue_update', context, data_dict)
     session = context['session']
 
     issue = issuemodel.Issue.get_by_name_or_id_and_number(
@@ -267,7 +262,7 @@ def issue_update(context, data_dict):
         if data_dict['status'] == issuemodel.ISSUE_STATUS.closed:
             issue.resolved = datetime.utcnow()
             user = context['user']
-            user_dict = p.toolkit.get_action('user_show')(
+            user_dict = toolkit.get_action('user_show')(
                 data_dict={'id': user})
             issue.assignee_id = user_dict['id']
         elif data_dict['status'] == issuemodel.ISSUE_STATUS.open:
@@ -288,7 +283,7 @@ def issue_delete(context, data_dict):
     :param issue_number: the number of the issue.
     :type issue_number: integer
     '''
-    p.toolkit.check_access('issue_delete', context, data_dict)
+    toolkit.check_access('issue_delete', context, data_dict)
     session = context['session']
     dataset_id = data_dict['dataset_id']
     issue_number = data_dict['issue_number']
@@ -309,7 +304,7 @@ def issue_delete(context, data_dict):
     session.commit()
 
 
-@p.toolkit.side_effect_free
+@toolkit.side_effect_free
 @validate(schema.issue_search_schema)
 def issue_search(context, data_dict):
     '''Search issues
@@ -351,7 +346,7 @@ def issue_search(context, data_dict):
     :rtype: list of dictionaries
 
     '''
-    p.toolkit.check_access('issue_search', context, data_dict)
+    toolkit.check_access('issue_search', context, data_dict)
     user = context['user']
     dataset_id = data_dict.get('dataset_id')
     organization_id = data_dict.get('organization_id')
@@ -359,19 +354,19 @@ def issue_search(context, data_dict):
     can_update = False
     if organization_id:
         try:
-            p.toolkit.check_access('organization_update', context,
+            toolkit.check_access('organization_update', context,
                                    data_dict={'id': organization_id})
             visibility = data_dict.get('visibility', None)
             can_update = True
-        except p.toolkit.NotAuthorized:
+        except toolkit.NotAuthorized:
             pass
     elif dataset_id:
         try:
-            p.toolkit.check_access('package_update', context,
+            toolkit.check_access('package_update', context,
                                    data_dict={'id': dataset_id})
             visibility = data_dict.get('visibility', None)
             can_update = True
-        except p.toolkit.NotAuthorized:
+        except toolkit.NotAuthorized:
             pass
     elif authz.is_sysadmin(user):
         visibility = data_dict.get('visibility', None)
@@ -379,10 +374,10 @@ def issue_search(context, data_dict):
 
     data_dict['visibility'] = visibility
     data_dict.pop('__extras', None)
-    include_datasets = p.toolkit.asbool(data_dict.get('include_datasets'))
-    include_reports = p.toolkit.asbool(data_dict.get('include_reports'))
-    include_count = p.toolkit.asbool(data_dict.pop('include_count', True))
-    include_results = p.toolkit.asbool(data_dict.pop('include_results', True))
+    include_datasets = toolkit.asbool(data_dict.get('include_datasets'))
+    include_reports = toolkit.asbool(data_dict.get('include_reports'))
+    include_count = toolkit.asbool(data_dict.pop('include_count', True))
+    include_results = toolkit.asbool(data_dict.pop('include_results', True))
     data_dict['include_datasets'] = include_datasets
 
     query = issuemodel.Issue.get_issues(
@@ -445,7 +440,7 @@ def issue_comment_create(context, data_dict):
     :returns: the newly created issue comment
     :rtype: dictionary
     '''
-    p.toolkit.check_access('issue_comment_create', context, data_dict)
+    toolkit.check_access('issue_comment_create', context, data_dict)
     user = context['user']
     user_obj = model.User.get(user)
 
@@ -467,8 +462,8 @@ def issue_comment_create(context, data_dict):
     model.Session.add(issue_comment)
     model.Session.commit()
 
-    notifications = p.toolkit.asbool(
-        config.get('ckanext.issues.send_email_notifications')
+    notifications = toolkit.asbool(
+        toolkit.config.get('ckanext.issues.send_email_notifications')
     )
 
     if notifications:
@@ -491,14 +486,12 @@ def issue_comment_create(context, data_dict):
     return issue_comment.as_dict()
 
 
-@p.toolkit.side_effect_free
+@toolkit.side_effect_free
 @validate(schema.organization_users_schema)
 def organization_users(context, data_dict):
     session = context['session']
-    user = context['user']
     organization_id = data_dict['organization_id']
-    query = session.query(model.User.id, model.User.name,
-                          model.User.fullname)\
+    query = session.query(model.User)\
         .filter(model.Member.group_id == organization_id)\
         .filter(model.Member.table_name == 'user')\
         .filter(model.Member.capacity.in_(['editor', 'admin']))\
@@ -509,29 +502,23 @@ def organization_users(context, data_dict):
 
     users = []
     for user in query.all():
-        if isinstance(user, tuple):
-            user_dict = {
-                'id': user[0],
-                'name': user[1],
-                'fullname': user[2],
-            }
-        else:
-            user_dict = dict(user.__dict__)
-            user_dict.pop('_labels', None)
+        user_dict = {
+            'id': user.id,
+            'name': user.name,
+            'fullname': user.fullname,
+        }
         users.append(user_dict)
     return users
 
 
-@p.toolkit.side_effect_free
+@toolkit.side_effect_free
 @validate(schema.organization_users_autocomplete_schema)
 def organization_users_autocomplete(context, data_dict):
     session = context['session']
-    user = context['user']
     q = data_dict['q']
     organization_id = data_dict['organization_id']
     limit = data_dict.get('limit', 20)
-    query = session.query(model.User.id, model.User.name,
-                          model.User.fullname)\
+    query = session.query(model.User)\
         .filter(model.Member.group_id == organization_id)\
         .filter(model.Member.table_name == 'user')\
         .filter(model.Member.capacity.in_(['editor', 'admin']))\
@@ -544,16 +531,13 @@ def organization_users_autocomplete(context, data_dict):
 
     users = []
     for user in query.all():
-        if isinstance(user, tuple):
-            user_dict = {
-                'id': user[0],
-                'name': user[1],
-                'fullname': user[2],
+        user_dict = {
+                'id': user.id,
+                'name': user.name,
+                'fullname': user.fullname,
             }
-        else:
-            user_dict = dict(user.__dict__)
-            user_dict.pop('_labels', None)
         users.append(user_dict)
+
     return users
 
 
@@ -577,7 +561,7 @@ def issue_report(context, data_dict):
               admin/editor, otherwise an empty dict
     :rtype: dict
     '''
-    p.toolkit.check_access('issue_report', context, data_dict)
+    toolkit.check_access('issue_report', context, data_dict)
     session = context['session']
 
     issue = issuemodel.Issue.get_by_name_or_id_and_number(
@@ -596,7 +580,7 @@ def _comment_or_issue_report(issue_or_comment, user_ref, dataset_id, session):
     except IntegrityError:
         session.rollback()
         raise ReportAlreadyExists(
-            p.toolkit._('Issue has already been reported by this user')
+            toolkit._('Issue has already been reported by this user')
         )
     try:
         # if you're an org admin/editor (can edit the dataset), it gets marked
@@ -606,7 +590,7 @@ def _comment_or_issue_report(issue_or_comment, user_ref, dataset_id, session):
             'session': session,
             'model': model,
         }
-        p.toolkit.check_access('package_update', context,
+        toolkit.check_access('package_update', context,
                                data_dict={'id': dataset_id})
 
         issue_or_comment.change_visibility(session, u'hidden')
@@ -614,11 +598,11 @@ def _comment_or_issue_report(issue_or_comment, user_ref, dataset_id, session):
         return {'visibility': issue_or_comment.visibility,
                 'abuse_reports': issue_or_comment.abuse_reports,
                 'abuse_status': issue_or_comment.abuse_status}
-    except p.toolkit.NotAuthorized:
-        max_strikes = config.get('ckanext.issues.max_strikes')
+    except toolkit.NotAuthorized:
+        max_strikes = toolkit.config.get('ckanext.issues.max_strikes')
         if (max_strikes
            and len(issue_or_comment.abuse_reports) >=
-           p.toolkit.asint(max_strikes)):
+           toolkit.asint(max_strikes)):
                 issue_or_comment.change_visibility(session, u'hidden')
     finally:
         # commit the IssueReport and changes to the Issue/Comment
@@ -642,7 +626,7 @@ def issue_comment_report(context, data_dict):
               admin/editor, otherwise an empty dict
     :rtype: dict
     '''
-    p.toolkit.check_access('issue_report', context, data_dict)
+    toolkit.check_access('issue_report', context, data_dict)
     session = context['session']
 
     comment_id = data_dict['comment_id']
@@ -651,7 +635,7 @@ def issue_comment_report(context, data_dict):
                                     comment.issue.dataset_id, session)
 
 
-@p.toolkit.side_effect_free
+@toolkit.side_effect_free
 @validate(schema.issue_report_schema)
 def issue_report_show(context, data_dict):
     '''Fetch the abuse reports for an issue
@@ -666,7 +650,7 @@ def issue_report_show(context, data_dict):
     :param issue_number: the number of the issue the comment belongs to
     :type issue_number: integer
     '''
-    p.toolkit.check_access('issue_report', context, data_dict)
+    toolkit.check_access('issue_report', context, data_dict)
     session = context['session']
 
     user = context['user']
@@ -686,11 +670,11 @@ def issue_report_show(context, data_dict):
             'session': session,
             'model': model,
         }
-        p.toolkit.check_access('package_update', package_context,
+        toolkit.check_access('package_update', package_context,
                                data_dict={'id': dataset_id})
         reports = issuemodel.Issue.Report.get_reports(session,
                                                       parent_id=issue.id)
-    except p.toolkit.NotAuthorized:
+    except toolkit.NotAuthorized:
         reports = issuemodel.Issue.Report.get_reports_for_user(
             session,
             user_id=user_id,
@@ -710,7 +694,7 @@ def issue_report_clear(context, data_dict):
     :param issue_number: the id of the issue the comment belongs to
     :type issue_number: integer
     '''
-    p.toolkit.check_access('issue_report_clear', context, data_dict)
+    toolkit.check_access('issue_report_clear', context, data_dict)
     session = context['session']
 
     issue_number = data_dict['issue_number']
@@ -731,15 +715,15 @@ def issue_report_clear(context, data_dict):
             'session': session,
             'model': model,
         }
-        p.toolkit.check_access('package_update', package_context,
+        toolkit.check_access('package_update', package_context,
                                data_dict={'id': dataset_id})
         issue.clear_all_abuse_reports(session)
         issue.abuse_status = issuemodel.AbuseStatus.not_abuse.value
-    except p.toolkit.NotAuthorized:
+    except toolkit.NotAuthorized:
         issue.clear_abuse_report(session, user_id)
-        max_strikes = config.get('ckanext.issues.max_strikes')
+        max_strikes = toolkit.config.get('ckanext.issues.max_strikes')
         if (max_strikes
-           and len(issue.abuse_reports) <= p.toolkit.asint(max_strikes)):
+           and len(issue.abuse_reports) <= toolkit.asint(max_strikes)):
             issue.change_visibility(session, u'visible')
     finally:
         session.commit()
@@ -756,7 +740,7 @@ def issue_comment_report_clear(context, data_dict):
     :param comment_id: the id of the issue the comment belongs to
     :type comment_id: integer
     '''
-    p.toolkit.check_access('issue_report_clear', context, data_dict)
+    toolkit.check_access('issue_report_clear', context, data_dict)
     session = context['session']
 
     comment_id = data_dict['comment_id']
@@ -772,29 +756,29 @@ def issue_comment_report_clear(context, data_dict):
             'session': session,
             'model': model,
         }
-        p.toolkit.check_access('package_update', package_context,
+        toolkit.check_access('package_update', package_context,
                                data_dict={'id': dataset_id})
         comment.clear_all_abuse_reports(session)
         comment.abuse_status = issuemodel.AbuseStatus.not_abuse.value
-    except p.toolkit.NotAuthorized:
+    except toolkit.NotAuthorized:
         comment.clear_abuse_report(session, user_id)
-        max_strikes = config.get('ckanext.issues.max_strikes')
+        max_strikes = toolkit.config.get('ckanext.issues.max_strikes')
         if (max_strikes and
-           len(comment.abuse_reports) <= p.toolkit.asint(max_strikes)):
+           len(comment.abuse_reports) <= toolkit.asint(max_strikes)):
             comment.change_visibility(session, u'visible')
     finally:
         session.commit()
     return True
 
 
-@p.toolkit.side_effect_free
+@toolkit.side_effect_free
 def issue_comment_search(context, data_dict):
-    p.toolkit.check_access('issue_comment_search', context, data_dict)
+    toolkit.check_access('issue_comment_search', context, data_dict)
     session = context['session']
 
     organization_id = data_dict.get('organization_id')
 
-    only_hidden = p.toolkit.asbool(data_dict.get('only_hidden', False))
+    only_hidden = toolkit.asbool(data_dict.get('only_hidden', False))
 
     if only_hidden:
         the_comments = issuemodel.IssueComment.get_hidden_comments(

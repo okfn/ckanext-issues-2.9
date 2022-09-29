@@ -1,11 +1,12 @@
 from flask import Blueprint
 
+from ckan.lib import helpers as h
 from ckan.plugins import toolkit
-import ckan.lib.helpers as h
 
 moderation = Blueprint(u'moderation', __name__)
 
-#this was renamed!!! if any issue arises check this
+
+# this was renamed!!! if any issue arises check this
 def moderate_all_reported_issues(organization_id):
     '''show all issues over max_strikes and are not moderated'''
     try:
@@ -14,8 +15,10 @@ def moderate_all_reported_issues(organization_id):
             'issues': issues.get('results', []),
             'organization': organization,
         }
-        return toolkit.render("issues/moderation.html",
-                                extra_vars=extra_vars)
+        return toolkit.render(
+            "issues/moderation.html",
+            extra_vars=extra_vars
+            )
     except toolkit.ObjectNotFound:
         toolkit.abort(404, toolkit._('Organization not found'))
 
@@ -38,8 +41,10 @@ def moderate(organization_id):
         except toolkit.ValidationError:
             toolkit.abort(404)
 
-    h.redirect_to('moderation.moderate_all_reported_issues',
-                    organization_id=organization_id)
+    h.redirect_to(
+        'moderation.moderate_all_reported_issues',
+        organization_id=organization_id
+        )
 
 
 def all_reported_issues(organization_id, include_sub_organizations=False):
@@ -97,19 +102,36 @@ def moderate_comment(organization_id):
         except toolkit.ValidationError:
             toolkit.abort(404)
 
-    h.redirect_to('moderation.moderate_all_reported_issues',
-                    organization_id=organization_id)
-
+    h.redirect_to(
+        'moderation.moderate_all_reported_issues',
+        organization_id=organization_id
+        )
 
 
 # Show all issues over max_strikes and are not moderated
-moderation.add_url_rule('/organization/<organization_id>/issues/reported', view_func=moderate_all_reported_issues, methods=['GET'])
+moderation.add_url_rule(
+    '/organization/<organization_id>/issues/reported',
+    view_func=moderate_all_reported_issues,
+    methods=['GET']
+    )
 
 # Moderate issues
-moderation.add_url_rule('/organization/<organization_id>/issues/moderate', view_func=moderate, methods=['GET', 'POST'])
+moderation.add_url_rule(
+    '/organization/<organization_id>/issues/moderate',
+    view_func=moderate,
+    methods=['GET', 'POST']
+    )
 
 # Reported comments
-moderation.add_url_rule('/organization/<organization_id>/issues/reported_comments', view_func=reported_comments, methods=['GET'])
+moderation.add_url_rule(
+    '/organization/<organization_id>/issues/reported_comments',
+    view_func=reported_comments,
+    methods=['GET']
+    )
 
 # Reported comments
-moderation.add_url_rule('/organization/<organization_id>/issues/moderate_comment', view_func=moderate_comment, methods=['GET', 'POST'])
+moderation.add_url_rule(
+    '/organization/<organization_id>/issues/moderate_comment',
+    view_func=moderate_comment,
+    methods=['GET', 'POST']
+    )

@@ -1,4 +1,4 @@
-[![CI Actions Status](https://github.com/keitaroinc/ckanext-issues/workflows/CI/badge.svg)](https://github.com/keitaroinc/ckanext-issues/actions) [![Coverage Status](https://coveralls.io/repos/github/keitaroinc/ckanext-issues/badge.svg?branch=master)](https://coveralls.io/github/keitaroinc/ckanext-issues?branch=master) [![Pypi](https://img.shields.io/pypi/v/ckanext-issues)](https://pypi.org/project/ckanext-issues) [![Python](https://img.shields.io/badge/python-3.6%20%7C%203.7%20%7C%203.8-blue)](https://www.python.org) [![CKAN](https://img.shields.io/badge/ckan-2.9-red)](https://www.ckan.org)
+[![CKAN](https://img.shields.io/badge/ckan-2.9-red)](https://www.ckan.org)
 # CKAN Issues Extension
 
 This extension allows users to to report issues with datasets in a CKAN
@@ -6,15 +6,15 @@ instance.
 
 ## Requirements
 
-This extension works with CKAN 2.9+.
+This extension works with CKAN 2.9.
+
+Work to support this extension in CKAN 2.10 is being done but not fully supported yet.
 
 ## Installation
 
-To install the plugin, enter your virtualenv and install from pip or source:
+To install the plugin, enter your virtualenv and install from source:
 
-    pip install ckanext-isssues
-   
-    pip install -e git+http://github.com/keitaroinc/ckanext-issues
+    pip install -e git+http://github.com/okfn/ckanext-issues-2.9
 
 Create the necessary tables:
 
@@ -33,6 +33,8 @@ should be available.
 When upgrading ckanext-issues from older code versions, you should run the issues upgrade command, in case there are any model migrations (e.g. 11th Jan 2016):
 
     ckan -c path-to/ckan.ini issuesupdate
+
+**Note:** This feature is not being tested and will be dropped in a future.
 
 ## What it does
 
@@ -78,11 +80,9 @@ If you set max_strikes then users can 'report' a comment as spam/abuse. If the n
 
     ckanext.issues.max_strikes = 2
 
-### Activation
-
 By default, issues are enabled for all datasets. If you wish to restrict
 issues to specific datasets or organizations, you can use these config options:
-    
+
     ckanext.issues.enabled_for_datasets = mydataset1 mydataset2 ...
     ckanext.issues.enabled_for_organizations = department-of-transport health-regulator
 
@@ -100,15 +100,17 @@ For the extra field to work you must not set `enabled_per_dataset` or `enabled_f
 
 Please open an issue in the github [issue tracker][issues].
 
-[issues]: https://github.com/keitaroinc/ckanext-issues
+[issues]: https://github.com/okfn/ckanext-issues-2.9
 
 ## Developers
 
 Normal requirements for CKAN Extensions (including an installation of CKAN and
 its dev requirements). Contributions welcome.
 
-### Testing with Postgres
-To run full production tests on postgres run. These are the tests that git actions will run
+### Testing
 
+To run tests using pytest
+
+    pip install -r dev-requirements.txt
     pytest --ckan-ini=test.ini ckanext/issues/tests
-    
+
