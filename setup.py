@@ -25,7 +25,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
-version = '1.0.0'
+version = 'v1.0.6'
 
 setup(
     name='ckanext-issues',
@@ -37,7 +37,7 @@ setup(
     long_description_content_type='text/markdown',
 
     # The project's main homepage.
-    url='https://github.com/keitaroinc/ckanext-issues',
+    url='https://github.com/okfn/ckanext-issues-2.9',
 
     # Author details
     author='''Keitaro Inc''',
