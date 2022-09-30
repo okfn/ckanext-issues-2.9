@@ -159,7 +159,10 @@ def _get_comment_email_body(comment, issue_subject, user_obj, recipient):
     extra_vars = _get_issue_vars(comment.issue, issue_subject, user_obj,
                                  recipient)
     extra_vars['comment'] = comment
-    return render_jinja2('issues/email/new_comment.html', extra_vars=extra_vars)
+    body = render_jinja2(
+        'issues/email/new_comment.html', extra_vars=extra_vars
+        )
+    return body
 
 
 @validate(schema.issue_create_schema)
@@ -204,14 +207,11 @@ def issue_create(context, data_dict):
         recipients = _get_recipients(context, dataset)
         subject = get_issue_subject(issue.as_dict())
 
-        for i, recipient in enumerate(recipients):
+        for recipient in recipients:
             body = _get_issue_email_body(issue, subject, user_obj, recipient)
-            user_obj = model.User.get(recipient['user_id'])
-            if i == 0:
-                log.debug('Mailing to %s (and %s others):\n%s',
-                          user_obj.email, len(recipients) - 1, body)
+            recipient_user = model.User.get(recipient['user_id'])
             try:
-                mailer.mail_user(user_obj, subject, body)
+                mailer.mail_user(recipient_user, subject, body)
             except (mailer.MailerException, TypeError) as e:
                 # TypeError occurs when we're running command from ckanapi
                 log.debug(e)
@@ -474,10 +474,9 @@ def issue_comment_create(context, data_dict):
         for recipient in recipients:
             body = _get_comment_email_body(
                 issue_comment, subject, user_obj, recipient)
-
-            user_obj = model.User.get(recipient['user_id'])
+            recipient_user = model.User.get(recipient['user_id'])
             try:
-                mailer.mail_user(user_obj, subject, body)
+                mailer.mail_user(recipient_user, subject, body)
             except (mailer.MailerException, TypeError) as e:
                 # TypeError occurs when we're running command from ckanapi
                 log.debug(e)
