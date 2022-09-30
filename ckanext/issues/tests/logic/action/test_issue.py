@@ -1,4 +1,3 @@
-from bs4.builder import TreeBuilder
 import mock
 import pytest
 
@@ -9,11 +8,12 @@ from ckan.plugins import toolkit
 from ckanext.issues.tests import factories as issue_factories
 from ckanext.issues.model import Issue, IssueComment
 from ckanext.issues.logic.action.action import _get_recipients
-from ckanext.issues.tests.fixtures import issues_setup, user
+
 
 @pytest.fixture
 def dataset():
     return factories.Dataset()
+
 
 class TestIssueShow(object):
     @pytest.fixture
@@ -50,17 +50,13 @@ class TestIssueShow(object):
         )
         user_id = issue['user_id']
         user = model.Session.query(model.User).\
-            filter(model.User.id==user_id).first()
+            filter(model.User.id == user_id).first()
         user = vars(user)
         assert 'test.ckan.net' == user['name']
 
-class TestIssueNewWithEmailing(object):
-    @pytest.fixture
-    def config(self, ckan_config):
-        ckan_config['ckanext.issues.send_email_notifications'] = 'True'
-        return ckan_config
 
-    @pytest.mark.usefixtures("clean_db", "issues_setup", "config")
+class TestIssueNew(object):
+    @pytest.mark.usefixtures("clean_db", "issues_setup")
     def test_issue_create(self):
         creator = factories.User(name='creator')
         admin = factories.User(name='admin')
@@ -81,11 +77,6 @@ class TestIssueNewWithEmailing(object):
         assert 'Title' == issue_object.title
         assert 'Description' == issue_object.description
         assert 1 == issue_object.number
-        # some test user for the org called 'test.ckan.net' gets emailed too
-        # users_emailed = [call for call in render_mock.call_args]
-        # print(users_emailed)
-        # users_emailed = users_emailed[1]['extra_vars']['recipient']['user_id']
-        # assert admin['id'] in users_emailed
 
     @pytest.mark.usefixtures("clean_db", "issues_setup")
     def test_issue_create_second(self, user, dataset):
@@ -207,14 +198,6 @@ class TestIssueNewWithEmailing(object):
 
 
 class TestIssueComment(object):
-    @classmethod
-    def _apply_config_changes(cls, cfg):
-        # Mock out the emailer
-        from ckan.lib import mailer
-        cls.mock_mailer = mock.MagicMock()
-        mailer.mail_user = cls.mock_mailer
-        cfg['ckanext.issues.send_email_notifications'] = True
-
     @pytest.mark.usefixtures("clean_db", "issues_setup")
     def test_create_comment_on_issue(self):
         creator = factories.User(name='creator')
@@ -245,10 +228,6 @@ class TestIssueComment(object):
         assert len(comments) == 1
         assert comments[0]['comment'] == 'some comment'
         assert comments[0]['user']['name'] == 'commenter'
-        # some test user for the org called 'test.ckan.net' gets emailed too
-        # users_emailed = [call[1]['extra_vars']['recipient']['user_id']
-        #                  for call in render_mock.call_args_list]
-        # assert admin['id'] == users_emailed
 
     @pytest.mark.usefixtures("clean_db", "issues_setup")
     def test_create_comment_on_closed_issue(self, user, dataset):
@@ -312,8 +291,7 @@ class TestIssueSearch(object):
                                          dataset_id=dataset['id'],
                                          sort='oldest')
         issues_list = search_res['results']
-        assert [i['id'] for i in created_issues] == \
-             [i['id'] for i in issues_list]
+        assert [i['id'] for i in created_issues] == [i['id'] for i in issues_list]
         assert search_res['count'] == 10
 
     @pytest.mark.usefixtures("clean_db", "issues_setup")
@@ -340,8 +318,7 @@ class TestIssueSearch(object):
         issues_list = helpers.call_action('issue_search',
                                           context={'user': user['name']},
                                           sort='oldest')['results']
-        assert [i['id'] for i in created_issues] == \
-            [i['id'] for i in issues_list]
+        assert [i['id'] for i in created_issues] == [i['id'] for i in issues_list]
 
     @pytest.mark.usefixtures("clean_db", "issues_setup")
     def test_limit(self, user, dataset):
@@ -357,8 +334,7 @@ class TestIssueSearch(object):
             limit=5
         )
         issues_list = search_res['results']
-        assert [i['id'] for i in created_issues][:5] ==\
-             [i['id'] for i in issues_list]
+        assert [i['id'] for i in created_issues][:5] == [i['id'] for i in issues_list]
         assert search_res['count'] == 5
 
     @pytest.mark.usefixtures("clean_db", "issues_setup")
@@ -372,8 +348,7 @@ class TestIssueSearch(object):
                                           dataset_id=dataset['id'],
                                           sort='oldest',
                                           offset=5)['results']
-        assert [i['id'] for i in created_issues][5:] == \
-                      [i['id'] for i in issues_list]
+        assert [i['id'] for i in created_issues][5:] == [i['id'] for i in issues_list]
 
     @pytest.mark.usefixtures("clean_db", "issues_setup")
     def test_pagination(self, user, dataset):
@@ -387,8 +362,7 @@ class TestIssueSearch(object):
                                           sort='oldest',
                                           offset=5,
                                           limit=3)['results']
-        assert [i['id'] for i in created_issues][5:8] == \
-                      [i['id'] for i in issues_list]
+        assert [i['id'] for i in created_issues][5:8] == [i['id'] for i in issues_list]
 
     @pytest.mark.usefixtures("clean_db", "issues_setup")
     def test_filter_newest(self, user, dataset):
@@ -403,8 +377,7 @@ class TestIssueSearch(object):
                                           context={'user': user['name']},
                                           dataset_id=dataset['id'],
                                           sort='newest')['results']
-        assert list(reversed([i['id'] for i in issues])) == \
-                      [i['id'] for i in issues_list]
+        assert list(reversed([i['id'] for i in issues])) == [i['id'] for i in issues_list]
 
     @pytest.mark.usefixtures("clean_db", "issues_setup")
     def test_filter_least_commented(self, user, dataset):
@@ -473,8 +446,7 @@ class TestIssueSearch(object):
                                               q='title')['results']
 
         expected_issue_ids = set([i['id'] for i in issues[:2]])
-        assert expected_issue_ids ==\
-                set([i['id'] for i in filtered_issues])
+        assert expected_issue_ids == set([i['id'] for i in filtered_issues])
 
 
 class TestIssueUpdate(object):
@@ -571,6 +543,7 @@ class TestIssueUpdate(object):
             dataset_id=dataset['id'],
             issue_number=10000000,
         )
+
     @pytest.mark.usefixtures("clean_db", "issues_setup")
     def test_updating_issue_nonexisting_dataset_raises_not_found(self, user):
         pytest.raises(
@@ -637,8 +610,7 @@ class TestOrganizationUsersAutocomplete(object):
         result = helpers.call_action('organization_users_autocomplete',
                                      q='test',
                                      organization_id=organization['id'])
-        assert set(['test_owner', 'test_editor', 'test_admin']) ==\
-                    set([i['name'] for i in result])
+        assert set(['test_owner', 'test_editor', 'test_admin']) == set([i['name'] for i in result])
 
 
 class TestCommentSearch(object):
@@ -702,31 +674,146 @@ class TestCommentSearch(object):
                                      organization_id=organization['id'],
                                      only_hidden=True)
 
-        assert [comment1['id']] ==\
-                      [c['id'] for c in result]
+        assert [comment1['id']] == [c['id'] for c in result]
 
     @pytest.mark.usefixtures("clean_db", "issues_setup")
     def test_reported_search(self, comment1, comment3):
-        result = helpers.call_action('issue_comment_search',
-                                     only_hidden=True)
-
-        assert [comment1['id'], comment3['id']] ==\
-                      [c['id'] for c in result]
+        result = helpers.call_action(
+            'issue_comment_search', only_hidden=True
+            )
+        ids = [comment1['id'], comment3['id']]
+        assert ids == [c['id'] for c in result]
 
     @pytest.mark.usefixtures("clean_db", "issues_setup")
-    def test_search_for_org(self,organization, comment1, comment2):
+    def test_search_for_org(self, organization, comment1, comment2):
         result = helpers.call_action('issue_comment_search',
                                      organization_id=organization['id'])
 
-        assert [comment1['id'], comment2['id']] ==\
-                      [c['id'] for c in result]
+        assert [comment1['id'], comment2['id']] == [c['id'] for c in result]
 
     @pytest.mark.usefixtures("clean_db", "issues_setup")
     def test_search(self, comment1, comment2, comment3, comment4):
         result = helpers.call_action('issue_comment_search')
 
-        assert[comment1['id'],
-                comment2['id'],
-                comment3['id'],
-                comment4['id']] ==\
-                [c['id'] for c in result]
+        ids = [comment1['id'], comment2['id'], comment3['id'], comment4['id']]
+
+        assert ids == [c['id'] for c in result]
+
+
+@pytest.mark.usefixtures("clean_db", "issues_setup")
+@mock.patch("ckanext.issues.logic.action.action.mail_user")
+class TestEmailNotifications:
+
+    @pytest.mark.ckan_config("ckanext.issues.send_email_notifications", False)
+    def test_email_notifications_are_not_sent_if_disabled(self, mock_mail_user):
+        creator = factories.User(name='creator')
+        org = factories.Organization()
+        dataset = factories.Dataset(owner_org=org["id"])
+
+        toolkit.get_action('issue_create')(
+            context={'user': creator['name']},
+            data_dict={
+                'title': 'Title',
+                'description': 'Description',
+                'dataset_id': dataset['id'],
+            }
+        )
+        mock_mail_user.assert_not_called()
+
+    @pytest.mark.ckan_config("ckanext.issues.send_email_notifications", True)
+    def test_org_admin_editors_are_notified_when_creating_issue(self, mock_mail_user):
+        creator = factories.User(name='creator')
+        admin = factories.User(name='admin')
+        editor = factories.User(name='editor')
+        member = factories.User(name='member')
+        org = factories.Organization(
+            users=[
+                {'name': admin['id'], 'capacity': 'admin'},
+                {'name': editor['id'], 'capacity': 'editor'},
+                {'name': member['id'], 'capacity': 'member'},
+                ]
+            )
+        dataset = factories.Dataset(owner_org=org['id'])
+
+        toolkit.get_action('issue_create')(
+            context={'user': creator['name']},
+            data_dict={
+                'title': 'Title',
+                'description': 'Description',
+                'dataset_id': dataset['id'],
+            }
+        )
+
+        # CKAN factories adds default user as org admin
+        assert len(org["users"]) == 4
+
+        # Assert emails is sent to admin/editors but not members
+        assert mock_mail_user.call_count == 3
+
+    @pytest.mark.ckan_config("ckanext.issues.send_email_notifications", True)
+    def test_email_notifications_content(self, mock_mail_user):
+        sysadmin = factories.Sysadmin(
+            name="sys_admin",
+            fullname="System Administrator",
+            email="sys_admin@example.org"
+        )
+        creator = factories.User()
+        org = helpers.call_action(
+            "organization_create",
+            {"user": sysadmin["name"]},
+            name="test-organization",
+            title="Test Organization"
+            )
+        helpers.call_action(
+            "member_create",
+            {"user": sysadmin["name"]},
+            id=org["id"],
+            object=sysadmin["id"],
+            object_type="user",
+            capacity="admin"
+        )
+        dataset = helpers.call_action(
+            'package_create',
+            context={"user": sysadmin["name"]},
+            name="my_issue_dataset",
+            title="My Issue Dataset",
+            owner_org=org["id"]
+            )
+        issue = toolkit.get_action('issue_create')(
+            context={'user': creator['name']},
+            data_dict={
+                'title': 'Title',
+                'description': 'Description',
+                'dataset_id': dataset['id'],
+            }
+        )
+        kall = mock_mail_user.mock_calls[0]
+        kall_args = kall[1]
+        recipient_user, subject, body = kall_args
+
+        # Assert is sent to org admin
+        assert recipient_user.id == sysadmin['id']
+        assert subject == '[CKAN Issue] My Issue Dataset'
+        # Assert creator is mentioned in the body
+        assert f"A user {creator['fullname']} has raised" in body
+
+        mock_mail_user.reset_mock()
+
+        commentor = factories.User()
+        helpers.call_action(
+            "issue_comment_create",
+            context={"user": commentor["name"]},
+            comment="This is a good comment!",
+            issue_number=issue['number'],
+            dataset_id=dataset["id"]
+        )
+
+        kall = mock_mail_user.mock_calls[0]
+        kall_args = kall[1]
+        recipient_user, subject, body = kall_args
+        # Assert is sent to org admin
+        assert recipient_user.id == sysadmin['id']
+        assert subject == '[CKAN Issue] My Issue Dataset'
+
+        # Assert commentor is mentioned in the body
+        assert f"A user {commentor['fullname']} has added a comment" in body
