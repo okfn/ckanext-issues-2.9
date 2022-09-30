@@ -8,7 +8,6 @@ from ckan.plugins import toolkit
 from ckanext.issues.tests import factories as issue_factories
 from ckanext.issues.model import Issue, IssueComment
 from ckanext.issues.logic.action.action import _get_recipients
-from ckanext.issues.tests.fixtures import issues_setup, user
 
 
 @pytest.fixture
